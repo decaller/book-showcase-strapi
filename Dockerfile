@@ -1,30 +1,32 @@
-# Creating multi-stage build for production
-FROM node:22-alpine AS build
-RUN apk update && apk add --no-cache build-base gcc autoconf automake zlib-dev libpng-dev vips-dev git > /dev/null 2>&1
-ARG NODE_ENV=production
-ENV NODE_ENV=${NODE_ENV}
+FROM node:18
+# alternatively you can use FROM strapi/base:latest
 
-WORKDIR /opt/
-COPY package.json package-lock.json ./
-RUN npm install -g node-gyp
-RUN npm config set fetch-retry-maxtimeout 600000 -g && npm install --only=production
-ENV PATH=/opt/node_modules/.bin:$PATH
-WORKDIR /opt/app
-COPY . .
-RUN npm run build
+# Set up working directory
+WORKDIR /app
 
-# Creating final production image
-FROM node:22-alpine
-RUN apk add --no-cache vips-dev
-ARG NODE_ENV=production
-ENV NODE_ENV=${NODE_ENV}
-WORKDIR /opt/
-COPY --from=build /opt/node_modules ./node_modules
-WORKDIR /opt/app
-COPY --from=build /opt/app ./
-ENV PATH=/opt/node_modules/.bin:$PATH
+# Copy package.json to root directory
+COPY package.json .
 
-RUN chown -R node:node /opt/app
-USER node
+# Copy yarn.lock to root directory
+COPY yarn.lock .
+
+# Install dependencies, but not generate a yarn.lock file and fail if an update is needed
+RUN yarn install --frozen-lockfile
+
+# Copy strapi project files
+COPY favicon.ico ./favicon.ico
+COPY src/ src/
+COPY public/ public/
+COPY database/ database/
+COPY config/ config/
+# ...
+
+# Build admin panel
+RUN yarn build
+
+# Run on port 1337
 EXPOSE 1337
-CMD ["npm", "run", "start"]
+
+# Start strapi server
+CMD ["yarn", "start"]
+
