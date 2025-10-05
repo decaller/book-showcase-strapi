@@ -9,16 +9,16 @@ WORKDIR /opt/
 RUN apk update && apk add --no-cache build-base gcc autoconf automake zlib-dev libpng-dev nasm bash vips-dev git
 
 # Copy package files first to leverage Docker cache
-COPY package.json yarn.lock* ./
+COPY package.json package-lock.json* ./
 
-# Install all dependencies
-RUN yarn install --frozen-lockfile
+# Install all dependencies using npm ci for clean, reproducible builds
+RUN npm ci
 
 # Copy the rest of the application source code
 COPY . .
 
 # Build the Strapi admin panel. This creates the /opt/build directory.
-RUN NODE_ENV=production yarn build
+RUN NODE_ENV=production npm run build
 
 # --- Production Stage ---
 # This stage creates the final, lean image that will run the application.
@@ -30,10 +30,10 @@ WORKDIR /opt/app
 RUN apk add --no-cache vips-dev
 
 # Copy package files from the build stage to leverage cache
-COPY --from=build /opt/package.json /opt/yarn.lock* ./
+COPY --from=build /opt/package.json /opt/package-lock.json* ./
 
-# Install only production dependencies.
-RUN yarn install --production --frozen-lockfile
+# Install only production dependencies. The --omit=dev flag is the npm v7+ equivalent of --production.
+RUN npm ci --omit=dev
 
 # Copy the built admin panel from the build stage
 COPY --from=build /opt/build ./build
@@ -45,5 +45,5 @@ COPY --from=build /opt/src ./src
 COPY --from=build /opt/public ./public
 
 EXPOSE 1337
-CMD ["yarn", "start"]
+CMD ["npm", "run", "start"]
 
