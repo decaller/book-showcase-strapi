@@ -4,13 +4,14 @@ module.exports = [
   {
     name: 'strapi::security',
     config: {
+      // 
+      // THIS IS THE CORRECT LOCATION FOR THE PROXY SETTING
+      //
+      proxy: true,
       contentSecurityPolicy: {
         useDefaults: true,
-        // THIS IS THE KEY FIX
-        // It tells Strapi to trust the X-Forwarded-Proto header from Caddy
-        proxy: true, 
         directives: {
-          'connect-src': ["'self'", 'https:'],
+          'connect-src': ["'self'", 'https:', 'http:'],
           'img-src': [
             "'self'",
             'data:',
@@ -25,8 +26,7 @@ module.exports = [
             'market-assets.strapi.io',
             'res.cloudinary.com',
           ],
-          // This fixes the inline script error you saw in the browser console
-          "script-src": ["'self'", "'unsafe-inline'"], 
+          "script-src": ["'self'", "'unsafe-inline'"],
           upgradeInsecureRequests: null,
         },
       },
