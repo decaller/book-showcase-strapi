@@ -1,25 +1,6 @@
-This file prevents certain files and directories from being copied
-into the Docker image, keeping the image small and secure.
-Git files
-
 .git
-.gitignore
-Environment variables (should be injected at runtime, not built into the image)
-
-.env*
-!/.env.example
-Node.js dependencies (these will be installed inside the container)
-
-node_modules/
-Strapi build artifacts and cache
-
-build/
-.cache/
-Temporary files and logs
-
-.tmp/
-*.log
-Operating system specific files
-
-.DS_Store
-Thumbs.db
+.dockerignore
+node_modules
+npm-debug.log
+Dockerfile
+.env
